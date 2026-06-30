@@ -444,15 +444,15 @@ public abstract class StartupFactory {
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						if (Environment.isProjectLibre()&&!Environment.isPlugin()) {
-							LicenseDialog.showDialog(gm.getFrame(),false);
-							UserInfoDialog.showDialog(gm.getFrame(),false);
+//							LicenseDialog.showDialog(gm.getFrame(),false);     // removed: personal build
+//							UserInfoDialog.showDialog(gm.getFrame(),false);    // removed: personal build
 //							DonateDialog.maybeShow(gm.getFrame(),false);
 							UpdateChecker.checkForUpdateInBackground();
 						}
 						if (welcome&&!Environment.isPlugin()) {
 							if (Environment.isProjectLibre()) {
 								//LicenseDialog.showDialog(gm.getFrame(),false);
-								TipOfTheDay.showDialog(gm.getFrame(), false);
+//								TipOfTheDay.showDialog(gm.getFrame(), false);  // removed: personal build
 							} else {
 								if (Environment.isNeedToRestart())
 									return;

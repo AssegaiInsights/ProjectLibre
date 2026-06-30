@@ -82,6 +82,34 @@ public class Main {
 		
 //		System.setProperty("file.encoding", "UTF-8");
 
+		// Sync GitHub issues into ~/AssegaiInsights_Project.xml before showing any UI.
+		// Calls build_project.py directly (not launch_and_sync.sh, which would try
+		// to re-open this app from within itself — wrong in the custom Java build).
+		try {
+			String home = System.getProperty("user.home");
+			String syncDir = home
+				+ "/Library/CloudStorage/OneDrive-Personal/AssegaiInsights"
+				+ "/Assegai_Insights_LLC/tech/project_sync";
+			String syncCmd = "cd '" + syncDir + "' && "
+				+ "export PATH=/opt/homebrew/bin:$PATH && "
+				+ "/usr/bin/python3 build_project.py > /tmp/projectlibre_sync.log 2>&1 && "
+				+ "cp AssegaiInsights_Project.xml '" + home + "/AssegaiInsights_Project.xml'";
+			new ProcessBuilder("/bin/bash", "-c", syncCmd)
+				.redirectErrorStream(true).start().waitFor();
+		} catch (Exception ignored) { /* sync is best-effort; never block startup */ }
+
+		// Register Mac OpenFilesHandler (Java 9+ API) so Finder double-click /
+		// `open -a App file.xml` delivers the path via Apple Event before the
+		// Swing event loop starts.  Store in a system property; picked up below.
+		try {
+			java.awt.Desktop d = java.awt.Desktop.getDesktop();
+			if (d.isSupported(java.awt.Desktop.Action.APP_OPEN_FILE)) {
+				d.setOpenFileHandler(e -> e.getFiles().stream().findFirst()
+					.ifPresent(f -> System.setProperty(
+						"projectlibre.openFile", f.getAbsolutePath())));
+			}
+		} catch (Exception ignored) {}
+
 		Environment.setStandAlone(true);
 		String[] formatedArgs;
 		if (args!=null && args.length>0){
@@ -106,6 +134,26 @@ public class Main {
 				formatedArgs=formatedList.toArray(new String[]{});
 			} else formatedArgs=args;
 		} else formatedArgs=args;
+
+		// If no file was passed via args, check the Apple Event property or
+		// fall back to the default working file (the synced project).
+		String openFile = System.getProperty("projectlibre.openFile");
+		if (openFile == null) {
+			String defaultFile = System.getProperty("user.home") + "/AssegaiInsights_Project.xml";
+			if (new java.io.File(defaultFile).exists()) {
+				openFile = defaultFile;
+			}
+		}
+		boolean hasFileArg = formatedArgs != null && java.util.Arrays.asList(formatedArgs).contains("--fileNames");
+		if (openFile != null && !hasFileArg) {
+			String[] withFile = new String[]{"--fileNames", openFile};
+			if (formatedArgs != null && formatedArgs.length > 0) {
+				withFile = java.util.Arrays.copyOf(formatedArgs, formatedArgs.length + 2);
+				withFile[formatedArgs.length] = "--fileNames";
+				withFile[formatedArgs.length + 1] = openFile;
+			}
+			formatedArgs = withFile;
+		}
 
 		com.projectlibre1.pm.graphic.gantt.Main.main(formatedArgs);
 	}

@@ -111,7 +111,7 @@ public class Main {
 //		}
 		ApplicationStartupFactory startupFactory=new ApplicationStartupFactory(opts); //put before to initialize standalone flag
 		Frame frame = MainFrameFactory.creareMainFrame(Messages.getContextString("Text.ApplicationTitle"), null, null);
-		boolean doWelcome = true; // to do see if project param exists in args
+		boolean doWelcome = !opts.containsKey("fileNames"); // skip Welcome if a project file was provided
 		startupFactory.instanceFromNewSession(frame,doWelcome);
 	}
 }
